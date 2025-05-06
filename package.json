@@ -10,8 +10,26 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-community/masked-view": "^0.1.11",
+    "@react-navigation/drawer": "^7.3.9",
+    "@react-navigation/native": "^7.1.6",
+    "@react-navigation/stack": "^7.2.10",
+    "axios": "^1.9.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "expo-linear-gradient": "^14.0.2",
+    "express": "^5.1.0",
+    "mongoose": "^8.14.0",
+    "multer": "^1.4.5-lts.2",
     "react": "19.0.0",
-    "react-native": "0.79.1"
+    "react-native": "0.79.1",
+    "react-native-gesture-handler": "^2.25.0",
+    "react-native-image-picker": "^8.2.0",
+    "react-native-linear-gradient": "^2.8.3",
+    "react-native-reanimated": "^3.17.5",
+    "react-native-safe-area-context": "^5.4.0",
+    "react-native-screens": "^4.10.0",
+    "react-native-vector-icons": "^10.2.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
