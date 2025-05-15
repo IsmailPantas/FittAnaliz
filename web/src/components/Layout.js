@@ -1,155 +1,236 @@
 import React, { useState } from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  AppBar,
   Box,
-  CssBaseline,
   Drawer,
-  IconButton,
   List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Toolbar,
-  Typography,
+  IconButton,
   useTheme,
+  useMediaQuery,
+  Typography,
+  Divider,
+  alpha,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
   Home as HomeIcon,
-  Person as PersonIcon,
   FitnessCenter as FitnessIcon,
+  Restaurant as RestaurantIcon,
+  Person as PersonIcon,
   Settings as SettingsIcon,
-  Logout as LogoutIcon,
+  ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
 
 const drawerWidth = 280;
+
+const menuItems = [
+  { title: 'Ana Sayfa', icon: <HomeIcon />, path: '/' },
+  { title: 'Vücut Analizi', icon: <FitnessIcon />, path: '/body-analysis' },
+  { title: 'Besin Değerleri', icon: <RestaurantIcon />, path: '/nutrition' },
+];
+
+const bottomMenuItems = [
+  { title: 'Profil', icon: <PersonIcon />, path: '/profile' },
+  { title: 'Ayarlar', icon: <SettingsIcon />, path: '/settings' },
+  { title: 'Çıkış Yap', icon: <LogoutIcon />, path: '/login' },
+];
 
 function Layout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
-  const menuItems = [
-    { text: 'Ana Sayfa', icon: <HomeIcon />, path: '/' },
-    { text: 'Vücut Analizi', icon: <FitnessIcon />, path: '/body-analysis' },
-    { text: 'Profil', icon: <PersonIcon />, path: '/profile' },
-    { text: 'Ayarlar', icon: <SettingsIcon />, path: '/settings' },
-  ];
+  const handleNavigate = (path) => {
+    navigate(path);
+    if (isMobile) {
+      setMobileOpen(false);
+    }
+  };
 
   const drawer = (
-    <div>
-      <Toolbar sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center',
-        backgroundColor: theme.palette.primary.main,
-        color: 'white',
-        padding: 2
-      }}>
-        <Typography variant="h6" noWrap component="div">
-          FitAnaliz
-        </Typography>
-      </Toolbar>
-      <List>
-        {menuItems.map((item) => (
-          <ListItem 
-            button 
-            key={item.text} 
-            onClick={() => {
-              navigate(item.path);
-              setMobileOpen(false);
-            }}
-          >
-            <ListItemIcon>{item.icon}</ListItemIcon>
-            <ListItemText primary={item.text} />
-          </ListItem>
-        ))}
-        <ListItem 
-          button 
-          onClick={() => {
-            navigate('/login');
-            setMobileOpen(false);
+    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{
+          p: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+        }}
+      >
+        <FitnessIcon sx={{ color: 'white', fontSize: 32 }} />
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'white',
+            fontWeight: 700,
+            textShadow: '0 2px 4px rgba(0,0,0,0.2)',
           }}
         >
-          <ListItemIcon><LogoutIcon /></ListItemIcon>
-          <ListItemText primary="Çıkış Yap" />
-        </ListItem>
+          FitAnaliz
+        </Typography>
+      </Box>
+
+      <List sx={{ flex: 1, px: 2, py: 3 }}>
+        {menuItems.map((item) => (
+          <ListItem
+            button
+            key={item.title}
+            onClick={() => handleNavigate(item.path)}
+            sx={{
+              mb: 1,
+              borderRadius: 2,
+              backgroundColor: location.pathname === item.path ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+              color: location.pathname === item.path ? theme.palette.primary.main : theme.palette.text.primary,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                color: location.pathname === item.path ? theme.palette.primary.main : theme.palette.text.primary,
+                minWidth: 40,
+              }}
+            >
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText 
+              primary={item.title}
+              primaryTypographyProps={{
+                fontWeight: location.pathname === item.path ? 600 : 400,
+              }}
+            />
+          </ListItem>
+        ))}
       </List>
-    </div>
+
+      <Divider sx={{ mx: 2 }} />
+
+      <List sx={{ px: 2, py: 3 }}>
+        {bottomMenuItems.map((item) => (
+          <ListItem
+            button
+            key={item.title}
+            onClick={() => handleNavigate(item.path)}
+            sx={{
+              mb: 1,
+              borderRadius: 2,
+              backgroundColor: location.pathname === item.path ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+              color: location.pathname === item.path ? theme.palette.primary.main : theme.palette.text.primary,
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.primary.main, 0.08),
+              },
+            }}
+          >
+            <ListItemIcon
+              sx={{
+                color: location.pathname === item.path ? theme.palette.primary.main : theme.palette.text.primary,
+                minWidth: 40,
+              }}
+            >
+              {item.icon}
+            </ListItemIcon>
+            <ListItemText 
+              primary={item.title}
+              primaryTypographyProps={{
+                fontWeight: location.pathname === item.path ? 600 : 400,
+              }}
+            />
+          </ListItem>
+        ))}
+      </List>
+    </Box>
   );
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      <CssBaseline />
-      <AppBar
-        position="fixed"
-        sx={{
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
-          ml: { sm: `${drawerWidth}px` },
-          backgroundColor: theme.palette.primary.main,
-        }}
-      >
-        <Toolbar>
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { sm: 'none' } }}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" noWrap component="div">
-            FitAnaliz
-          </Typography>
-        </Toolbar>
-      </AppBar>
+    <Box sx={{ display: 'flex', bgcolor: alpha(theme.palette.primary.main, 0.03) }}>
+      {isMobile && (
+        <IconButton
+          color="primary"
+          aria-label="open drawer"
+          edge="start"
+          onClick={handleDrawerToggle}
+          sx={{
+            position: 'fixed',
+            top: 16,
+            left: 16,
+            zIndex: theme.zIndex.drawer + 2,
+            backgroundColor: 'white',
+            boxShadow: theme.shadows[2],
+            '&:hover': {
+              backgroundColor: 'white',
+            },
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+      )}
+
       <Box
         component="nav"
-        sx={{ width: { sm: drawerWidth }, flexShrink: { sm: 0 } }}
+        sx={{
+          width: { md: drawerWidth },
+          flexShrink: { md: 0 },
+        }}
       >
         <Drawer
-          variant="temporary"
-          open={mobileOpen}
+          variant={isMobile ? 'temporary' : 'permanent'}
+          open={isMobile ? mobileOpen : true}
           onClose={handleDrawerToggle}
           ModalProps={{
             keepMounted: true,
           }}
           sx={{
-            display: { xs: 'block', sm: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            '& .MuiDrawer-paper': {
+              width: drawerWidth,
+              boxSizing: 'border-box',
+              border: 'none',
+              backgroundColor: alpha(theme.palette.background.paper, 0.9),
+              backdropFilter: 'blur(10px)',
+              boxShadow: theme.shadows[3],
+            },
           }}
-        >
-          {drawer}
-        </Drawer>
-        <Drawer
-          variant="permanent"
-          sx={{
-            display: { xs: 'none', sm: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
-          }}
-          open
         >
           {drawer}
         </Drawer>
       </Box>
+
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           p: 3,
-          width: { sm: `calc(100% - ${drawerWidth}px)` },
+          width: { md: `calc(100% - ${drawerWidth}px)` },
           minHeight: '100vh',
-          backgroundColor: '#f5f5f5',
+          background: `linear-gradient(135deg, 
+            ${alpha(theme.palette.primary.main, 0.03)} 0%,
+            ${alpha(theme.palette.primary.main, 0.05)} 50%,
+            ${alpha(theme.palette.secondary.main, 0.03)} 100%
+          )`,
         }}
       >
-        <Toolbar />
-        <Outlet />
+        <Box
+          sx={{
+            maxWidth: 1200,
+            mx: 'auto',
+            p: { xs: 2, md: 4 },
+            backgroundColor: alpha(theme.palette.background.paper, 0.8),
+            borderRadius: 2,
+            boxShadow: `0 0 20px ${alpha(theme.palette.primary.main, 0.1)}`,
+          }}
+        >
+          <Outlet />
+        </Box>
       </Box>
     </Box>
   );

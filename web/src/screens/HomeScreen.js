@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -9,6 +9,7 @@ import {
   TextField,
   InputAdornment,
   IconButton,
+  alpha,
 } from '@mui/material';
 import {
   Search as SearchIcon,
@@ -20,6 +21,7 @@ import {
   WaterDrop as WaterIcon,
   Person as ProfileIcon,
 } from '@mui/icons-material';
+import { authService } from '../services/api';
 
 const MenuCard = ({ title, icon, onClick }) => (
   <Card
@@ -46,7 +48,13 @@ const MenuCard = ({ title, icon, onClick }) => (
 
 function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const currentUser = authService.getCurrentUser();
+    setUser(currentUser);
+  }, []);
 
   const menuItems = [
     {
@@ -57,7 +65,7 @@ function HomeScreen() {
     {
       title: 'Besin Değerleri',
       icon: <FoodIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      onClick: () => console.log('Besin değerleri'),
+      onClick: () => navigate('/nutrition'),
     },
     {
       title: 'Beslenme Planı',
@@ -93,7 +101,7 @@ function HomeScreen() {
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom>
-        Hoş Geldin, Kullanıcı
+        Hoş Geldin, {user?.firstName || 'Kullanıcı'}
       </Typography>
       <Typography variant="subtitle1" color="text.secondary" gutterBottom>
         Bugün sağlıklı yaşam için ne yapmak istersin?

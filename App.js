@@ -9,12 +9,15 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import BodyAnalysisScreen from './screens/BodyAnalysisScreen';
+import NutritionScreen from './screens/NutritionScreen';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
 const CustomDrawerContent = ({ navigation }) => {
   return (
+    <SafeAreaView style={styles.drawerContent}>
     <View style={styles.drawerContent}>
       <View style={styles.drawerHeader}>
         <Icon name="account-circle" size={60} color="#800080" />
@@ -27,6 +30,9 @@ const CustomDrawerContent = ({ navigation }) => {
         <Text style={styles.drawerItem} onPress={() => navigation.navigate('BodyAnalysis')}>
           <Icon name="human" size={24} color="#800080" /> Vücut Analizi
         </Text>
+        <Text style={styles.drawerItem} onPress={() => navigation.navigate('Nutrition')}>
+          <Icon name="food-apple" size={24} color="#800080" /> Besin Değerleri
+        </Text>
         <Text style={styles.drawerItem} onPress={() => console.log('Profil')}>
           <Icon name="account" size={24} color="#800080" /> Profil
         </Text>
@@ -35,6 +41,7 @@ const CustomDrawerContent = ({ navigation }) => {
         </Text>
       </View>
     </View>
+    </SafeAreaView>
   );
 };
 
@@ -53,6 +60,7 @@ const MainDrawer = () => {
     >
       <Drawer.Screen name="Home" component={HomeScreen} />
       <Drawer.Screen name="BodyAnalysis" component={BodyAnalysisScreen} />
+      <Drawer.Screen name="Nutrition" component={NutritionScreen} />
     </Drawer.Navigator>
   );
 };
@@ -90,9 +98,9 @@ const styles = StyleSheet.create({
   },
   drawerHeader: {
     padding: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f8f8f8',
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#eee',
     alignItems: 'center',
   },
   drawerHeaderText: {
@@ -102,13 +110,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   drawerBody: {
-    padding: 20,
+    padding: 15,
   },
   drawerItem: {
     fontSize: 16,
     color: '#333',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    paddingVertical: 12,
+    marginBottom: 5,
   },
 });

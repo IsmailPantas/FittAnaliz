@@ -49,7 +49,7 @@ const HomeScreen = ({ navigation, route }) => {
     {
       title: 'Besin Değerleri',
       icon: 'food-apple',
-      onPress: () => console.log('Besin değerleri'),
+      onPress: () => navigation.navigate('Nutrition'),
     },
     {
       title: 'Beslenme Planı',

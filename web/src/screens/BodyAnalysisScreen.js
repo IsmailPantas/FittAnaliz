@@ -222,7 +222,7 @@ function BodyAnalysisScreen() {
             Kamera ile Vücut Analizi
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Bu bölüm, kamera ile çekilen görüntü üzerinde MediaPipe Pose kullanarak vücut analizi yapar.
+            Kamera ile çekilen görüntü üzerinde kullanarak vücut analizi yapın.
           </Typography>
 
           <Grid container spacing={2}>
@@ -310,7 +310,7 @@ function BodyAnalysisScreen() {
         {/* JavaScript Hesaplama Bölümü */}
         <Paper elevation={3} sx={{ p: 3, mb: 4 }}>
           <Typography variant="h6" gutterBottom>
-            JavaScript ile Hesaplama
+            Kendi Hesaplamalarınızı Yapın
           </Typography>
           <form onSubmit={handleSubmit}>
             <TextField
