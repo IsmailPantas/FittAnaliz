@@ -42,6 +42,8 @@ function BodyAnalysisScreen() {
   const [cameraError, setCameraError] = useState('');
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
+  const fileInputRef = useRef(null); // Dosya inputu için ref
+  const [uploadedFile, setUploadedFile] = useState(null); // Yüklenen dosyayı (File object) tutmak için
 
   const calculateBMI = (weight, height) => {
     const heightM = height / 100;
@@ -142,14 +144,32 @@ function BodyAnalysisScreen() {
   };
 
   const startCamera = async () => {
+    setUploadedFile(null);
+    setCapturedImage(null);
+    setCameraError('');
     try {
+      console.log("Kamera başlatılıyor...");
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setCameraActive(true);
-      }
+      setCameraActive(true); // Önce video DOM'a girsin
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            const playPromise = videoRef.current.play();
+            if (playPromise !== undefined) {
+              playPromise.catch(e => {
+                console.error("Video play hatası:", e);
+              });
+            }
+          };
+          console.log("Kamera aktif!");
+        } else {
+          console.error("videoRef.current yok!");
+        }
+      }, 100); // 100ms bekle, video DOM'a gelsin
     } catch (err) {
-      setCameraError('Kamera erişimi sağlanamadı');
+      console.error("Kamera başlatma hatası:", err);
+      setCameraError('Kamera erişimi sağlanamadı. Lütfen tarayıcı izinlerini kontrol edin.');
     }
   };
 
@@ -163,47 +183,99 @@ function BodyAnalysisScreen() {
     }
   };
 
-  const captureImage = () => {
-    if (videoRef.current && canvasRef.current) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
+  const captureImageAndPrepareBlob = () => {
+    return new Promise((resolve, reject) => {
+      if (videoRef.current && canvasRef.current) {
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        const context = canvas.getContext('2d');
 
-      // Canvas boyutlarını video boyutlarına ayarla
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Video karesini canvas'a çiz
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Canvas'ı Blob formatına çevir
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], "capture.jpg", { type: 'image/jpeg' });
+            setUploadedFile(file); // Yakalanan görüntüyü de File nesnesi olarak sakla
+            setCapturedImage(URL.createObjectURL(file));
+            resolve(file); // File nesnesini döndür
+          } else {
+            reject(new Error('Görüntüden blob oluşturulamadı.'));
+          }
+        }, 'image/jpeg', 0.9);
+        stopCamera();
+      } else {
+        reject(new Error('Kamera veya canvas referansı bulunamadı.'));
+      }
+    });
+  };
 
-      // Canvas'ı base64 formatına çevir
-      const imageData = canvas.toDataURL('image/jpeg');
-      setCapturedImage(imageData);
-      stopCamera();
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      stopCamera(); // Kamera açıksa kapat
+      setCapturedImage(URL.createObjectURL(file)); // Önizleme için
+      setUploadedFile(file); // Seçilen dosyayı state'e kaydet
+      setCameraAnalysisResult(null); // Eski analiz sonuçlarını temizle
+      setCameraError(''); // Eski hataları temizle
+    } else {
+      setCapturedImage(null);
+      setUploadedFile(null);
+      setCameraError('Lütfen geçerli bir resim dosyası seçin.');
+    }
+    // Aynı dosyayı tekrar seçebilmek için input değerini sıfırla
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
-  const analyzeImage = async () => {
-    if (!capturedImage) return;
+  const analyzeImageWithFastAPI = async () => {
+    let imageFileToAnalyze = uploadedFile; // Önce yüklenmiş dosyayı kontrol et
+
+    if (!imageFileToAnalyze) { // Eğer dosya yüklenmemişse kameradan yakalamayı dene
+      try {
+        imageFileToAnalyze = await captureImageAndPrepareBlob();
+      } catch (error) {
+        setCameraError(error.message || 'Görüntü yakalanırken/hazırlanırken bir hata oluştu.');
+        setCameraLoading(false);
+        return;
+      }
+    }
+
+    if (!imageFileToAnalyze) {
+      setCameraError('Analiz için bir görüntü (kamera veya dosya) bulunamadı.');
+      return;
+    }
+
+    const currentGender = formData.gender || 'male';
 
     setCameraLoading(true);
     setCameraError('');
     setCameraAnalysisResult(null);
 
-    try {
-      // Base64 görüntüyü backend'e gönder
-      const response = await axios.post('http://localhost:3001/api/body-analysis/analyze-image', {
-        image: capturedImage,
-        gender: formData.gender
-      });
+    const data = new FormData();
+    // imageFileToAnalyze zaten bir File nesnesi olmalı (ya yüklenen dosya ya da kameradan oluşturulan)
+    data.append('file', imageFileToAnalyze, imageFileToAnalyze.name || 'analysis_image.jpg');
+    data.append('gender', currentGender);
 
-      if (response.data.success) {
-        setCameraAnalysisResult(response.data.data);
-      } else {
-        setCameraError(response.data.message);
-      }
+    try {
+      const response = await axios.post('http://localhost:8000/analyze_image/', data, {
+        headers: {
+          // 'Content-Type': 'multipart/form-data' // axios FormData ile bunu otomatik ayarlar
+        },
+      });
+      
+      // FastAPI direkt sonuçları döner, response.data.data veya response.data.success kontrolüne gerek yok
+      // Başarılı yanıt (2xx) doğrudan sonuçları içerir.
+      setCameraAnalysisResult(response.data); 
+
     } catch (err) {
-      setCameraError('Görüntü analizi sırasında bir hata oluştu');
+      // err.response.data.detail FastAPI'den gelen hata mesajını içerir
+      const errorMessage = err.response?.data?.detail || err.message || 'Görüntü analizi sırasında bir sunucu hatası oluştu.';
+      setCameraError(errorMessage);
+      console.error("FastAPI Analiz Hatası:", err.response || err);
     } finally {
       setCameraLoading(false);
     }
@@ -225,61 +297,80 @@ function BodyAnalysisScreen() {
             Kamera ile çekilen görüntü üzerinde kullanarak vücut analizi yapın.
           </Typography>
 
-          <Grid container spacing={2}>
+          <Grid container spacing={2} alignItems="flex-start">
             <Grid item xs={12} md={6}>
-              <Box sx={{ position: 'relative', width: '100%', height: 400, bgcolor: 'black' }}>
-                {!cameraActive && !capturedImage && (
+              {/* Kamera ve Resim Önizleme Alanı */}
+              <Box sx={{ position: 'relative', width: '100%', minHeight: 300, height: 'auto', bgcolor: 'black', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                {capturedImage ? (
+                  <img
+                    src={capturedImage}
+                    alt="Yakalanan veya Yüklenen Görüntü"
+                    style={{ maxWidth: '100%', maxHeight: 400, height: 'auto', objectFit: 'contain' }}
+                  />
+                ) : cameraActive ? (
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    playsInline
+                    style={{ width: '100%', height: 400, display: 'block', objectFit: 'contain', background: 'black' }}
+                  />
+                ) : (
+                  null
+                )}
+                <canvas ref={canvasRef} style={{ display: 'none' }} />
+              </Box>
+
+              {/* Butonlar */}
+              <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {!cameraActive && (
                   <Button
                     variant="contained"
                     onClick={startCamera}
-                    sx={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}
                   >
                     Kamerayı Başlat
                   </Button>
                 )}
-                
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  style={{ width: '100%', height: '100%', display: cameraActive ? 'block' : 'none' }}
-                />
-                
-                {capturedImage && (
-                  <img
-                    src={capturedImage}
-                    alt="Captured"
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                  />
+                {cameraActive && (
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={captureImageAndPrepareBlob} // Bu artık uploadedFile'ı da set edecek
+                  >
+                    Görüntü Yakala
+                  </Button>
                 )}
-                
-                <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+                {/* Dosya Yükleme Butonu */}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  id="image-upload-input"
+                />
+                <label htmlFor="image-upload-input">
+                    <Button 
+                        variant="outlined" 
+                        component="span" // Bu, label'ın button gibi davranmasını sağlar
+                        fullWidth
+                    >
+                        Resim Dosyası Yükle
+                    </Button>
+                </label>
+
+                {(capturedImage || uploadedFile) && !cameraLoading && (
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={analyzeImageWithFastAPI}
+                    disabled={cameraLoading}
+                    sx={{ mt: 1 }} // Diğer butonlarla uyum için
+                  >
+                    {cameraLoading ? <CircularProgress size={24} /> : 'Seçili Görüntüyü Analiz Et'}
+                  </Button>
+                )}
               </Box>
-
-              {cameraActive && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  fullWidth
-                  onClick={captureImage}
-                  sx={{ mt: 2 }}
-                >
-                  Fotoğraf Çek
-                </Button>
-              )}
-
-              {capturedImage && (
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  fullWidth
-                  onClick={analyzeImage}
-                  disabled={cameraLoading}
-                  sx={{ mt: 2 }}
-                >
-                  {cameraLoading ? <CircularProgress size={24} /> : 'Görüntüyü Analiz Et'}
-                </Button>
-              )}
             </Grid>
 
             <Grid item xs={12} md={6}>
@@ -290,15 +381,9 @@ function BodyAnalysisScreen() {
               )}
 
               {cameraAnalysisResult && (
-                <Paper elevation={2} sx={{ p: 2 }}>
-                  <Typography variant="h6" gutterBottom>
-                    Kamera Analiz Sonuçları
-                  </Typography>
-                  <Typography>Vücut Yağ Oranı: {cameraAnalysisResult['Vücut Yağ Oranı (%)']}%</Typography>
-                  <Typography>Bel-Kalça Oranı: {cameraAnalysisResult['Bel-Kalça Oranı (WHR)']}</Typography>
-                  <Typography>Omuz Genişliği: {cameraAnalysisResult['Omuz Genişliği (px)']} px</Typography>
-                  <Typography>Kalça Genişliği: {cameraAnalysisResult['Kalça Genişliği (px)']} px</Typography>
-                  <Typography>Boy Uzunluğu: {cameraAnalysisResult['Boy Uzunluğu (px)']} px</Typography>
+                <Paper elevation={3} sx={{ p: 3, mt: 2 }}>
+                  <Typography variant="h6">Kamera Analiz Sonuçları (FastAPI)</Typography>
+                  <pre>{JSON.stringify(cameraAnalysisResult, null, 2)}</pre>
                 </Paper>
               )}
             </Grid>

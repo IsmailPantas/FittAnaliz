@@ -30,6 +30,7 @@ const menuItems = [
   { title: 'Ana Sayfa', icon: <HomeIcon />, path: '/' },
   { title: 'Vücut Analizi', icon: <FitnessIcon />, path: '/body-analysis' },
   { title: 'Besin Değerleri', icon: <RestaurantIcon />, path: '/nutrition' },
+  { title: 'Egzersiz Hareketleri', icon: <FitnessIcon />, path: '/exercises' },
 ];
 
 const bottomMenuItems = [

@@ -21,6 +21,7 @@ import {
   WaterDrop as WaterIcon,
   Person as ProfileIcon,
 } from '@mui/icons-material';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { authService } from '../services/api';
 
 const MenuCard = ({ title, icon, onClick }) => (
@@ -73,9 +74,9 @@ function HomeScreen() {
       onClick: () => console.log('Beslenme planı'),
     },
     {
-      title: 'Egzersiz Planı',
-      icon: <ExerciseIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      onClick: () => console.log('Egzersiz planı'),
+      title: 'Egzersiz Hareketleri',
+      icon: <DirectionsRunIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
+      onClick: () => navigate('/exercises'),
     },
     {
       title: 'İlerleme Takibi',

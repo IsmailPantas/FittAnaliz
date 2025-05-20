@@ -8,72 +8,96 @@ import {
   ActivityIndicator,
   ScrollView,
   Alert,
+  Platform,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import * as ImagePicker from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const API_URL = 'http://10.0.2.2:3000/api';
+// API Temel URL'si - FastAPI backend'inizin çalıştığı adrese göre ayarlayın
+// Android emülatörü için: 'http://10.0.2.2:8000'
+// iOS simülatörü veya fiziksel cihaz (aynı ağda): 'http://<bilgisayarınızın_yerel_ip_adresi>:8000'
+const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+const ANALYSIS_ENDPOINT = `${API_BASE_URL}/analyze_image/`;
 
 const BodyAnalysisScreen = ({ navigation }) => {
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState(null);
+  const [analysisResults, setAnalysisResults] = useState(null);
+  const [gender, setGender] = useState('male');
 
   const selectImage = () => {
     const options = {
-      title: 'Fotoğraf Seç',
-      storageOptions: {
-        skipBackup: true,
-        path: 'images',
-      },
+      mediaType: 'photo',
+      quality: 0.8,
     };
 
     ImagePicker.launchImageLibrary(options, async (response) => {
       if (response.didCancel) {
+        console.log('Kullanıcı resim seçmeyi iptal etti');
         return;
       }
 
-      if (response.error) {
-        Alert.alert('Hata', 'Fotoğraf seçilirken bir hata oluştu');
+      if (response.errorCode) {
+        Alert.alert('Hata', `Fotoğraf seçilirken bir hata oluştu: ${response.errorMessage}`);
         return;
       }
 
-      setImage(response.assets[0]);
-      await analyzeBody(response.assets[0]);
+      if (response.assets && response.assets.length > 0) {
+        const selectedImage = response.assets[0];
+        setImage(selectedImage);
+        await performAnalysis(selectedImage);
+      }
     });
   };
 
-  const analyzeBody = async (selectedImage) => {
+  const toggleGender = () => {
+    setGender(prevGender => prevGender === 'male' ? 'female' : 'male');
+  };
+
+  const performAnalysis = async (selectedImage) => {
+    if (!selectedImage) {
+      Alert.alert('Uyarı', 'Lütfen önce bir resim seçin.');
+      return;
+    }
+
+    setLoading(true);
+    setAnalysisResults(null);
+
+    const formData = new FormData();
+    formData.append('file', {
+      uri: selectedImage.uri,
+      type: selectedImage.type,
+      name: selectedImage.fileName || 'photo.jpg',
+    });
+    formData.append('gender', gender);
+
     try {
-      setLoading(true);
-      setResults(null);
-
-      const formData = new FormData();
-      formData.append('image', {
-        uri: selectedImage.uri,
-        type: selectedImage.type,
-        name: selectedImage.fileName || 'photo.jpg',
-      });
-      formData.append('gender', 'male'); // Varsayılan olarak erkek
-
-      const response = await fetch(`${API_URL}/body-analysis/analyze`, {
+      const response = await fetch(ANALYSIS_ENDPOINT, {
         method: 'POST',
         body: formData,
         headers: {
-          'Content-Type': 'multipart/form-data',
         },
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error);
+      if (!response.ok) {
+        throw new Error(responseData.detail || `Sunucu hatası: ${response.status}`);
       }
+      
+      const formattedResults = {
+        bodyFatPercentage: responseData["Vücut Yağ Oranı (%)"],
+        ratio: responseData["Kalça/Omuz Genişlik Oranı"], 
+        shoulderWidth: responseData["Omuz Genişliği (px)"],
+        hipWidth: responseData["Kalça Genişliği (px)"],
+        height: responseData["Boy Uzunluğu (px)"]
+      };
+      setAnalysisResults(formattedResults);
 
-      setResults(data.results);
     } catch (error) {
-      Alert.alert('Hata', error.message);
+      Alert.alert('Analiz Hatası', error.message);
+      console.error("Analiz API Hatası:", error);
     } finally {
       setLoading(false);
     }
@@ -82,7 +106,7 @@ const BodyAnalysisScreen = ({ navigation }) => {
   const ResultItem = ({ label, value, unit = '' }) => (
     <View style={styles.resultItem}>
       <Text style={styles.resultLabel}>{label}</Text>
-      <Text style={styles.resultValue}>{value}{unit}</Text>
+      <Text style={styles.resultValue}>{value !== undefined && value !== null ? value : 'N/A'}{unit}</Text>
     </View>
   );
 
@@ -96,6 +120,9 @@ const BodyAnalysisScreen = ({ navigation }) => {
           <Icon name="arrow-left" size={30} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.title}>Vücut Analizi</Text>
+        <TouchableOpacity onPress={toggleGender} style={styles.genderButton}>
+            <Icon name={gender === 'male' ? 'gender-male' : 'gender-female'} size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -117,31 +144,31 @@ const BodyAnalysisScreen = ({ navigation }) => {
           </View>
         )}
 
-        {results && (
+        {analysisResults && (
           <View style={styles.resultsContainer}>
             <Text style={styles.resultsTitle}>Analiz Sonuçları</Text>
             <ResultItem 
               label="Vücut Yağ Oranı" 
-              value={results.bodyFatPercentage} 
+              value={analysisResults.bodyFatPercentage} 
               unit="%" 
             />
             <ResultItem 
-              label="Bel-Kalça Oranı (WHR)" 
-              value={results.whr} 
+              label="Kalça/Omuz Oranı"
+              value={analysisResults.ratio} 
             />
             <ResultItem 
               label="Omuz Genişliği" 
-              value={results.shoulderWidth} 
+              value={analysisResults.shoulderWidth} 
               unit=" px" 
             />
             <ResultItem 
               label="Kalça Genişliği" 
-              value={results.hipWidth} 
+              value={analysisResults.hipWidth} 
               unit=" px" 
             />
             <ResultItem 
-              label="Boy Uzunluğu" 
-              value={results.height} 
+              label="Boy Uzunluğu (Piksel)"
+              value={analysisResults.height} 
               unit=" px" 
             />
           </View>
@@ -158,23 +185,26 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 20,
-    marginBottom: 10,
+    paddingTop: Platform.OS === 'ios' ? 40 : 20,
+    paddingBottom: 10,
   },
   backButton: {
     padding: 5,
   },
-  scrollContent: {
-    padding: 20,
-  },
   title: {
-    flex: 1,
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
     textAlign: 'center',
-    marginRight: 35,
+  },
+  genderButton: {
+    padding: 5,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
   },
   imageContainer: {
     width: '100%',
@@ -183,6 +213,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     overflow: 'hidden',
     marginBottom: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   image: {
     width: '100%',
@@ -190,7 +222,6 @@ const styles = StyleSheet.create({
     resizeMode: 'cover',
   },
   placeholderContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -225,12 +256,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
   },
   resultLabel: {
-    color: '#fff',
+    color: 'rgba(255, 255, 255, 0.9)',
     fontSize: 16,
   },
   resultValue: {

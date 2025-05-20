@@ -10,6 +10,7 @@ import LoginScreen from './screens/LoginScreen';
 import HomeScreen from './screens/HomeScreen';
 import BodyAnalysisScreen from './screens/BodyAnalysisScreen';
 import NutritionScreen from './screens/NutritionScreen';
+import ExerciseListScreen from './screens/ExerciseListScreen';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Stack = createStackNavigator();
@@ -32,6 +33,9 @@ const CustomDrawerContent = ({ navigation }) => {
         </Text>
         <Text style={styles.drawerItem} onPress={() => navigation.navigate('Nutrition')}>
           <Icon name="food-apple" size={24} color="#800080" /> Besin Değerleri
+        </Text>
+        <Text style={styles.drawerItem} onPress={() => navigation.navigate('Exercises')}>
+          <Icon name="dumbbell" size={24} color="#800080" /> Egzersiz Hareketleri
         </Text>
         <Text style={styles.drawerItem} onPress={() => console.log('Profil')}>
           <Icon name="account" size={24} color="#800080" /> Profil
@@ -61,6 +65,7 @@ const MainDrawer = () => {
       <Drawer.Screen name="Home" component={HomeScreen} />
       <Drawer.Screen name="BodyAnalysis" component={BodyAnalysisScreen} />
       <Drawer.Screen name="Nutrition" component={NutritionScreen} />
+      <Drawer.Screen name="Exercises" component={ExerciseListScreen} />
     </Drawer.Navigator>
   );
 };
