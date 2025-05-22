@@ -57,9 +57,9 @@ const HomeScreen = ({ navigation, route }) => {
       onPress: () => console.log('Beslenme planı'),
     },
     {
-      title: 'Egzersiz Planı',
+      title: 'Egzersiz Hareketleri',
       icon: 'dumbbell',
-      onPress: () => console.log('Egzersiz planı'),
+      onPress: () => navigation.navigate('Exercises'),
     },
     {
       title: 'İlerleme Takibi',

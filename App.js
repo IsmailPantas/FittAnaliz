@@ -11,6 +11,7 @@ import HomeScreen from './screens/HomeScreen';
 import BodyAnalysisScreen from './screens/BodyAnalysisScreen';
 import NutritionScreen from './screens/NutritionScreen';
 import ExerciseListScreen from './screens/ExerciseListScreen';
+import RegisterScreen from './screens/RegisterScreen';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Stack = createStackNavigator();
@@ -84,6 +85,11 @@ export default function App() {
         <Stack.Screen 
           name="Login" 
           component={LoginScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen 
+          name="Register" 
+          component={RegisterScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen 

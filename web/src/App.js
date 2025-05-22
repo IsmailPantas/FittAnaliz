@@ -10,6 +10,7 @@ import HomeScreen from './screens/HomeScreen';
 import BodyAnalysisScreen from './screens/BodyAnalysisScreen';
 import NutritionPage from './screens/NutritionPage';
 import ExerciseListScreen from './screens/ExerciseListScreen';
+import RegisterScreen from './screens/RegisterScreen';
 
 // Components
 import Layout from './components/Layout';
@@ -26,6 +27,7 @@ function App() {
       >
         <Routes>
           <Route path="/login" element={<LoginScreen />} />
+          <Route path="/register" element={<RegisterScreen />} />
           <Route path="/" element={<Layout />}>
             <Route index element={<HomeScreen />} />
             <Route path="body-analysis" element={<BodyAnalysisScreen />} />
