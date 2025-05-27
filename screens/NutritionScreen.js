@@ -93,12 +93,18 @@ const NutritionCard = ({ item }) => {
   );
 };
 
-const NutritionScreen = () => {
+const NutritionScreen = ({ navigation, route }) => {
+  const { user } = route.params || {};
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [nutritionData, setNutritionData] = useState([]);
   const [searching, setSearching] = useState(false);
-  const navigation = useNavigation();
+
+  useEffect(() => {
+    if (!user) {
+      navigation.replace('Login');
+    }
+  }, [user]);
 
   // Yaygın besinleri yükle
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,9 +8,11 @@ import {
   Dimensions,
   TextInput,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MenuCard = ({ title, icon, onPress }) => (
   <TouchableOpacity style={styles.card} onPress={onPress}>
@@ -19,9 +21,26 @@ const MenuCard = ({ title, icon, onPress }) => (
   </TouchableOpacity>
 );
 
-const HomeScreen = ({ navigation, route }) => {
-  const { user } = route.params || {};
+const HomeScreen = ({ navigation }) => {
+  const [user, setUser] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    console.log('HomeScreen useEffect çalıştı');
+    AsyncStorage.getItem('user').then(data => {
+      console.log('AsyncStorage\'dan user verisi alındı:', data);
+      if (data) {
+        const parsedUser = JSON.parse(data);
+        console.log('Parse edilmiş user:', parsedUser);
+        setUser(parsedUser);
+      } else {
+        console.log('AsyncStorage\'da user verisi bulunamadı, Login ekranına yönlendiriliyor');
+        navigation.replace('Login');
+      }
+    }).catch(error => {
+      console.error('AsyncStorage okuma hatası:', error);
+    });
+  }, []);
 
   const handleLogout = () => {
     Alert.alert(
@@ -49,17 +68,17 @@ const HomeScreen = ({ navigation, route }) => {
     {
       title: 'Besin Değerleri',
       icon: 'food-apple',
-      onPress: () => navigation.navigate('Nutrition'),
+      onPress: () => navigation.navigate('Nutrition', { user }),
     },
     {
       title: 'Beslenme Planı',
-      icon: 'clipboard-text',
-      onPress: () => console.log('Beslenme planı'),
+      icon: 'clipboard-text-outline',
+      onPress: () => navigation.navigate('MealPlan', { user }),
     },
     {
       title: 'Egzersiz Hareketleri',
       icon: 'dumbbell',
-      onPress: () => navigation.navigate('Exercises'),
+      onPress: () => navigation.navigate('Exercises', { user }),
     },
     {
       title: 'İlerleme Takibi',
@@ -69,18 +88,34 @@ const HomeScreen = ({ navigation, route }) => {
     {
       title: 'Su Takibi',
       icon: 'water',
-      onPress: () => console.log('Su takibi'),
+      onPress: () => navigation.navigate('WaterTracking', { user }),
     },
     {
       title: 'Profil',
       icon: 'account',
       onPress: () => console.log('Profil'),
     },
+    {
+      title: 'Egzersiz Planı',
+      icon: 'clipboard-text',
+      onPress: () => {
+        console.log('Egzersiz Planı butonuna tıklandı, user:', user);
+        navigation.navigate('ExercisePlan', { user });
+      },
+    },
   ];
 
   const filteredMenuItems = menuItems.filter(item =>
     item.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (!user) {
+    return (
+      <View style={{flex:1, justifyContent:'center', alignItems:'center'}}>
+        <ActivityIndicator size="large" color="#800080" />
+      </View>
+    );
+  }
 
   return (
     <LinearGradient

@@ -20,6 +20,7 @@ import {
   Timeline as ProgressIcon,
   WaterDrop as WaterIcon,
   Person as ProfileIcon,
+  EventNote as ExercisePlanIcon,
 } from '@mui/icons-material';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import { authService } from '../services/api';
@@ -71,12 +72,17 @@ function HomeScreen() {
     {
       title: 'Beslenme Planı',
       icon: <PlanIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      onClick: () => console.log('Beslenme planı'),
+      onClick: () => navigate('/meal-plan'),
     },
     {
       title: 'Egzersiz Hareketleri',
       icon: <DirectionsRunIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
       onClick: () => navigate('/exercises'),
+    },
+    {
+      title: 'Egzersiz Planı',
+      icon: <ExercisePlanIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
+      onClick: () => navigate('/exercise-plan'),
     },
     {
       title: 'İlerleme Takibi',
@@ -86,7 +92,7 @@ function HomeScreen() {
     {
       title: 'Su Takibi',
       icon: <WaterIcon sx={{ fontSize: 40, color: 'primary.main' }} />,
-      onClick: () => console.log('Su takibi'),
+      onClick: () => navigate('/water-tracking'),
     },
     {
       title: 'Profil',

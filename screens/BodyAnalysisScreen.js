@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -20,7 +20,14 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
 const ANALYSIS_ENDPOINT = `${API_BASE_URL}/analyze_image/`;
 
-const BodyAnalysisScreen = ({ navigation }) => {
+const BodyAnalysisScreen = ({ navigation, route }) => {
+  const { user } = route.params || {};
+  useEffect(() => {
+    if (!user) {
+      navigation.replace('Login');
+    }
+  }, [user]);
+
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(false);
   const [analysisResults, setAnalysisResults] = useState(null);

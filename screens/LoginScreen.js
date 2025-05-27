@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import {
   View,
   Text,
@@ -12,10 +12,13 @@ import {
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import axios from 'axios';
+import { UserContext } from '../UserContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const API_URL = 'http://10.0.2.2:3001'; // Android Emulator için backend
 
 const LoginScreen = ({ navigation }) => {
+  const { setUser } = useContext(UserContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -38,7 +41,11 @@ const LoginScreen = ({ navigation }) => {
       console.log('Sunucu yanıtı:', response.data);
 
       if (response.data.success) {
-        navigation.replace('MainApp', { user: response.data.user });
+        setUser(response.data.user);
+        await AsyncStorage.setItem('user', JSON.stringify(response.data.user));
+        const userData = await AsyncStorage.getItem('user');
+        console.log('Login sonrası AsyncStorage:', userData);
+        navigation.replace('MainApp');
       } else {
         Alert.alert('Hata', response.data.message || 'Giriş başarısız.');
       }

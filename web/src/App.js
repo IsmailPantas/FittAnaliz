@@ -11,6 +11,9 @@ import BodyAnalysisScreen from './screens/BodyAnalysisScreen';
 import NutritionPage from './screens/NutritionPage';
 import ExerciseListScreen from './screens/ExerciseListScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import MealPlanScreen from './screens/MealPlanScreen';
+import ExercisePlanScreen from './screens/ExercisePlanScreen';
+import WaterTrackingPage from './screens/WaterTrackingPage';
 
 // Components
 import Layout from './components/Layout';
@@ -33,6 +36,9 @@ function App() {
             <Route path="body-analysis" element={<BodyAnalysisScreen />} />
             <Route path="nutrition" element={<NutritionPage />} />
             <Route path="exercises" element={<ExerciseListScreen />} />
+            <Route path="meal-plan" element={<MealPlanScreen />} />
+            <Route path="exercise-plan" element={<ExercisePlanScreen />} />
+            <Route path="water-tracking" element={<WaterTrackingPage />} />
           </Route>
         </Routes>
       </Box>

@@ -38,6 +38,7 @@ function LoginScreen() {
           localStorage.removeItem('rememberMe');
           localStorage.removeItem('userEmail');
         }
+        localStorage.setItem('userId', response.user.id);
         navigate('/');
       } else {
         setError(response.message);
